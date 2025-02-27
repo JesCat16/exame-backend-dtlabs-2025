@@ -6,10 +6,10 @@ class DataIoT():
     humidity: int
     voltage: int
     current: int
-    
+
 context = zmq.Context()
 socket = context.socket(zmq.REP)
-socket.connect("tcp://localhost:5556") # conecta no broker local
+socket.connect("tcp://localhost:5558") # conecta no broker local
 msg_count = 0
 
 while True:
