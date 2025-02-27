@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  postgres-compose:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: "juju0101"
+    ports:
+      - "5432:5432" 
+    networks:
+      - postgres-compose-network
+      
+  pgadmin-compose:
+    image:  dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "jmdjesus83@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "juju0101"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres-compose
+    networks:
+      - postgres-compose-network
+
+networks: 
+  postgres-compose-network:
+    driver: bridge
