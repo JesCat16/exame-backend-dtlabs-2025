@@ -5,8 +5,10 @@ from DB.dbconnection import engine, SessionLocal
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import datetime
+import auth
 
 app = FastAPI()
+app.include_router(auth.router)
 models.Base.metadata.create_all(bind = engine)
 
 class Data(BaseModel):
@@ -35,12 +37,11 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
-def get_items(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.IotData).offset(skip).limit(limit).all()
+# @app.get("/data")
+# async def readData():
 
-@app.get("/items/")
-def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = get_items(db, skip=skip, limit=limit)
-    return items
-
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host='127.0.0.1', port=8000)
