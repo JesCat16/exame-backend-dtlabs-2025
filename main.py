@@ -1,13 +1,18 @@
 from fastapi import FastAPI, HTTPException, Depends
-from typing import List, Annotated
+from typing import Annotated
 import Models.models as models
 from DB.dbconnection import engine, SessionLocal
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import datetime
+import zmq
 import Security.auth as auth
 import random
 import string
+import msgpack
+
+context = zmq.Context()
+socket = context.socket(zmq.PUSH)
+socket.bind("tcp://127.0.0.1:5555")
 
 app = FastAPI()
 app.include_router(auth.router)
@@ -15,7 +20,7 @@ models.Base.metadata.create_all(bind = engine)
 
 class Data(BaseModel):
     server_ulid: str
-    timestamp: datetime
+    timestamp: str
     temperature: float
     humidity: float
     voltage: float
@@ -44,6 +49,15 @@ def id_generator(size=22, chars=string.ascii_uppercase + string.digits):
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
+@app.post("/data", status_code= auth.status.HTTP_200_OK)
+async def postServers(data: Data, db: db_dependency):
+    db_data = models.IotData(server_ulid = data.server_ulid, timestamp = data.timestamp, temperature = data.temperature, 
+                             humidity = data.humidity, voltage = data.voltage, current = data.current)
+    db.add(db_data)
+    db.commit()
+    db.refresh(db_data)
+    return db_data
+
 @app.get("/health")
 async def Servers(user: user_dependency, db: db_dependency):
     if user is None:
@@ -67,8 +81,12 @@ async def postServers(server: ServerActivation, user: user_dependency, db: db_de
     db.add(db_server)
     db.commit()
     db.refresh(db_server)
+    activation = {"server_ulid": ulid, "server_name": server.server_name}
+    serialize_object = msgpack.packb(activation)
+    socket.send(serialize_object)
+    socket.close()
+    context.term()
     return server
-
 
 if __name__ == '__main__':
     import uvicorn

@@ -6,7 +6,7 @@ class IotData(Base):
     __tablename__ = 'dataIot'
     id = Column(Integer, primary_key=True, autoincrement= True, index= True)
     server_ulid = Column(String, index=True)
-    timestamp = Column(DateTime, default=datetime.now, nullable=False)
+    timestamp = Column(String, nullable=False)
     temperature = Column(Float)
     humidity = Column(Float)
     voltage = Column(Float)

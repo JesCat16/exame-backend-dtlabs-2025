@@ -3,9 +3,19 @@ import jsonpickle
 import datetime
 import random
 import time
+import zmq
+import msgpack
+
+context = zmq.Context()
+socket = context.socket(zmq.PULL)
+socket.connect("tcp://127.0.0.1:5555")
+
+received_object = socket.recv()
+deserialized_object = msgpack.unpackb(received_object)
+print(deserialized_object)
 
 date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-
+server_ulid = " "
 class DataIot():
     server_ulid: str
     timestamp: str
@@ -28,7 +38,7 @@ class DataIot():
                 "voltage": self.voltage,
                 "current": self.current}
 
-def publish_test_message():
+def publish_IoT_Data():
         rabbitmq = RabbitMQ()
         try:
             rabbitmq.publish(queue_name='server_01', message=message)
@@ -37,10 +47,10 @@ def publish_test_message():
             print(f"Failed to publish test message: {e}")
         finally:
             rabbitmq.close()
-    
-while True:
-    data = DataIot("aaaaaaaa",date, round(random.uniform(20,40),1),round(random.uniform(0,100),1),round(random.uniform(110,220),1),round(random.uniform(1,10),1))
-    message = jsonpickle.dumps(data.to_dict())
 
-    publish_test_message()
-    time.sleep(1)
+if server_ulid != " ":
+    while True:
+        data = DataIot(server_ulid,date, round(random.uniform(20,40),1),round(random.uniform(0,100),1),round(random.uniform(110,220),1),round(random.uniform(1,10),1))
+        message = jsonpickle.dumps(data.to_dict())
+        publish_IoT_Data()
+        time.sleep(1)

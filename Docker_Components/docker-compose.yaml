@@ -1,20 +1,12 @@
 version: '3'
 
 services:
-  rabbitmq-compose:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - '5672:5672'
-      - '15672:15672'
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-
   postgres-compose:
     image: postgres:latest
+    container_name: postgres-compose
     environment:
       POSTGRES_PASSWORD: "juju0101"
+      POSTGRES_USER: "postgres"
     ports:
       - "5432:5432" 
     networks:
@@ -31,6 +23,16 @@ services:
       - postgres-compose
     networks:
       - postgres-compose-network
+
+  rabbitmq-compose:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 networks: 
   postgres-compose-network:
