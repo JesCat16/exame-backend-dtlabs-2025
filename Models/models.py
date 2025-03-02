@@ -15,7 +15,7 @@ class IotData(Base):
 class Servershealth(Base):
     __tablename__ = 'serverHealth'
     server_ulid = Column(String, primary_key= True, index= True)
-    status = Column(Boolean, index= True)
+    status = Column(String, index= True)
     server_name = Column(String, index=True)
 
 class User(Base):
