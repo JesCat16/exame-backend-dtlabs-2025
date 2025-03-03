@@ -15,12 +15,12 @@ server_name = " "
 date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 server_ulid = " "
 
-while server_name != "server_01":
+while server_name != "server_03":
     received_object = socket.recv()
     deserialized_object = msgpack.unpackb(received_object)
     server_name = deserialized_object.get("server_name")
 
-if server_name == "server_01":
+if server_name == "server_03":
     server_ulid = deserialized_object.get("server_ulid")
 
 class DataIot():
