@@ -10,12 +10,19 @@ context = zmq.Context()
 socket = context.socket(zmq.PULL)
 socket.connect("tcp://127.0.0.1:5555")
 
-received_object = socket.recv()
-deserialized_object = msgpack.unpackb(received_object)
-print(deserialized_object)
+server_name = " "
 
 date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 server_ulid = " "
+
+while server_name != "server_01":
+    received_object = socket.recv()
+    deserialized_object = msgpack.unpackb(received_object)
+    server_name = deserialized_object.get("server_name")
+
+if server_name == "server_01":
+    server_ulid = deserialized_object.get("server_ulid")
+
 class DataIot():
     server_ulid: str
     timestamp: str
@@ -53,4 +60,4 @@ if server_ulid != " ":
         data = DataIot(server_ulid,date, round(random.uniform(20,40),1),round(random.uniform(0,100),1),round(random.uniform(110,220),1),round(random.uniform(1,10),1))
         message = jsonpickle.dumps(data.to_dict())
         publish_IoT_Data()
-        time.sleep(1)
+        time.sleep(10)

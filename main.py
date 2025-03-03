@@ -4,19 +4,19 @@ import Models.models as models
 from DB.dbconnection import engine, SessionLocal
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import zmq
 import Security.auth as auth
 import random
 import string
+import zmq
 import msgpack
-
-context = zmq.Context()
-socket = context.socket(zmq.PUSH)
-socket.bind("tcp://127.0.0.1:5555")
 
 app = FastAPI()
 app.include_router(auth.router)
 models.Base.metadata.create_all(bind = engine)
+
+context = zmq.Context()
+socket = context.socket(zmq.PUSH)
+socket.bind("tcp://127.0.0.1:5555")
 
 class Data(BaseModel):
     server_ulid: str
@@ -50,13 +50,20 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
 @app.post("/data", status_code= auth.status.HTTP_200_OK)
-async def postServers(data: Data, db: db_dependency):
+async def postData(data: Data, db: db_dependency):
     db_data = models.IotData(server_ulid = data.server_ulid, timestamp = data.timestamp, temperature = data.temperature, 
                              humidity = data.humidity, voltage = data.voltage, current = data.current)
     db.add(db_data)
     db.commit()
     db.refresh(db_data)
     return db_data
+
+@app.get("/data")
+async def Datas(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+    db_datas = db.query(models.IotData).offset(0).limit(100).all()
+    return db_datas
 
 @app.get("/health")
 async def Servers(user: user_dependency, db: db_dependency):
@@ -86,7 +93,7 @@ async def postServers(server: ServerActivation, user: user_dependency, db: db_de
     socket.send(serialize_object)
     socket.close()
     context.term()
-    return server
+    return db_server
 
 if __name__ == '__main__':
     import uvicorn

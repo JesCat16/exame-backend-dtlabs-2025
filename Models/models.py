@@ -1,10 +1,10 @@
-from sqlalchemy import Column, ForeignKey, Float, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Float, Integer, String
 from DB.dbconnection import Base
 from datetime import datetime
 
 class IotData(Base):
     __tablename__ = 'dataIot'
-    id = Column(Integer, primary_key=True, autoincrement= True, index= True)
+    id = Column(Integer, primary_key=True, autoincrement= True)
     server_ulid = Column(String, index=True)
     timestamp = Column(String, nullable=False)
     temperature = Column(Float)
