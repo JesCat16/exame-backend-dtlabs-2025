@@ -72,14 +72,17 @@ def consume_server_03():
         print(f"Failed to establish connection to RabbitMQ: {e}")
         sys.exit(1)
 
+#Start Queue for the messages from all the servers
 createQueue01()
 createQueue02()
 createQueue03()
 
+#Make threads for each consumer to run simultaneously
 cosumer01 = threading.Thread(target=consume_server_01)
 cosumer02 = threading.Thread(target=consume_server_02)
 cosumer03 = threading.Thread(target=consume_server_03)
 
+#Start all threads
 cosumer01.start()
 cosumer02.start()
 cosumer03.start()

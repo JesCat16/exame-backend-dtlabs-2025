@@ -10,17 +10,21 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 
+#Router for the auth methods
 router = APIRouter(
     prefix='/auth',
     tags=['auth']
 )
 
+# Secret_key and algorith to create token
 SECRET_KEY = 'ksj4v7o0bcvjcoabh3m47kkat3jimcbt63x2vt3thlut7tviw4hpdhdw6rhbot3z'
 ALGORITHM = 'HS256'
 
+# Encrypt password for the database registre
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/login')
 
+#Input for login and creation of token
 class CreateUser(BaseModel):
     user_name: str
     password: str
@@ -29,6 +33,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# Used to get database session
 def get_db():
     db = SessionLocal()
     try:
@@ -38,6 +43,7 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+#Register User
 @router.post("/register", status_code= status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUser):
     create_user_model = User(
@@ -47,6 +53,7 @@ async def create_user(db: db_dependency, create_user_request: CreateUser):
     db.add(create_user_model)
     db.commit()
 
+#Generate token
 @router.post("/login", response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = authenticate_user(form_data.username, form_data.password, db)
@@ -56,6 +63,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     token = create_access_token(user.user_name, user.id, timedelta(minutes=20))
     return {'access_token': token, 'token_type': 'bearer'}
 
+#Confirm if user exist
 def authenticate_user(username: str, password: str, db):
     user = db.query(User).filter(User.user_name == username).first()
     if not user:
@@ -64,12 +72,14 @@ def authenticate_user(username: str, password: str, db):
         return False
     return user
 
+#Create token
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     encode = {'sub': username, 'id': user_id}
     expires = datetime.utcnow() + expires_delta 
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm= ALGORITHM)
 
+#Get user currently at used
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
