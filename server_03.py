@@ -11,8 +11,6 @@ socket = context.socket(zmq.PULL)
 socket.connect("tcp://127.0.0.1:5557")
 
 server_name = " "
-
-date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 server_ulid = " "
 
 while server_name != "server_03":
@@ -57,6 +55,7 @@ def publish_IoT_Data():
 
 if server_ulid != " ":
     while True:
+        date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         data = DataIot(server_ulid,date, round(random.uniform(20,40),1),round(random.uniform(0,100),1),round(random.uniform(110,220),1),round(random.uniform(1,10),1))
         message = jsonpickle.dumps(data.to_dict())
         publish_IoT_Data()

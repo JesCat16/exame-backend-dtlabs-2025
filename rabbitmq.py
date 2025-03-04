@@ -15,6 +15,16 @@ class RabbitMQ:
         url = "http://localhost:15672/api/queues"
         auth = (self.user, self.password)
         headers = {"Content-Type": "application/json"}
+    
+    def create_queue(self, queue_name):
+        if not self.channel:
+            raise Exception("Connection is not established.")
+        
+        try:
+            self.channel.queue_declare(queue=queue_name, durable=True)
+            print(f"Queue '{queue_name}' created.")
+        except Exception as e:
+            print(f"Error declaring the queue: {e}")
 
     def connect(self):
         credentials = pika.PlainCredentials(self.user, self.password)
@@ -35,11 +45,20 @@ class RabbitMQ:
     def publish(self, queue_name, message):
         if not self.channel:
             raise Exception("Connection is not established.")
-        self.channel.queue_declare(queue=queue_name, durable=True)
-        self.channel.basic_publish(exchange='',
-                                   routing_key=queue_name,
-                                   body=message,
-                                   properties=pika.BasicProperties(
-                                       delivery_mode=2,  # make message persistent
-                                   ))
-        #print(f"Sent message to queue {queue_name}: {message}")
+        
+        try:
+            # Declare the queue
+            self.create_queue(queue_name)
+            
+            # Publish the message
+            self.channel.basic_publish(
+                exchange='',  # Default exchange (direct)
+                routing_key=queue_name,
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # Make message persistent
+                )
+            )
+            print(f"Sent message to queue {queue_name}: {message}")
+        except Exception as e:
+            print(f"Error declaring or publishing to the queue: {e}")

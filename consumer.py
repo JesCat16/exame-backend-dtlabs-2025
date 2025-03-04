@@ -8,22 +8,14 @@ import threading
 url = "http://127.0.0.1:8000/data/"
 
 
-def callback_server01(ch, method, properties, body):
-    jsonSend = json.loads(body.decode())
-    response = requests.post(url, json=jsonSend)
-
-def callback_server02(ch, method, properties, body):
-    jsonSend = json.loads(body.decode())
-    response = requests.post(url, json=jsonSend)
-
-def callback_server03(ch, method, properties, body):
+def callback(ch, method, properties, body):
     jsonSend = json.loads(body.decode())
     response = requests.post(url, json=jsonSend)
 
 def consume_server_01():
     rabbitmq = RabbitMQ()
     try:
-        rabbitmq.consume(queue_name='server_01', callback=callback_server01)
+        rabbitmq.consume(queue_name='server_01', callback=callback)
         time.sleep(1)
 
     except Exception as e:
@@ -36,7 +28,7 @@ def consume_server_02():
     rabbitmq = RabbitMQ()
     try:
         print("Connection to RabbitMQ established successfully.")
-        rabbitmq.consume(queue_name='server_02', callback=callback_server02)
+        rabbitmq.consume(queue_name='server_02', callback=callback)
         time.sleep(1)
     except Exception as e:
         print(f"Failed to establish connection to RabbitMQ: {e}")
@@ -48,7 +40,7 @@ def consume_server_03():
     rabbitmq = RabbitMQ()
     try:
         print("Connection to RabbitMQ established successfully.")
-        rabbitmq.consume(queue_name='server_03', callback=callback_server03)
+        rabbitmq.consume(queue_name='server_03', callback=callback)
         time.sleep(1)
     except Exception as e:
         print(f"Failed to establish connection to RabbitMQ: {e}")

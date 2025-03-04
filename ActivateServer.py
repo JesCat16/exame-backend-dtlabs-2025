@@ -16,10 +16,11 @@ while True:
     listServers = []
     for serv in listjsons:
         jsonS = json.loads(serv)
-        print(jsonS[0])
-        activation = {"server_ulid": jsonS[0].get("server_ulid"), "server_name": jsonS[0].get("server_name")}
-        serialize_object = msgpack.packb(activation)
-        socket.send(serialize_object)
+        for item in jsonS:
+            print(item)
+            activation = {"server_ulid": item.get("server_ulid"), "server_name": item.get("server_name")}
+            serialize_object = msgpack.packb(activation)
+            socket.send(serialize_object)
     time.sleep(300)
     
 
