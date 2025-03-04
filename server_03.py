@@ -8,7 +8,7 @@ import msgpack
 
 context = zmq.Context()
 socket = context.socket(zmq.PULL)
-socket.connect("tcp://127.0.0.1:5555")
+socket.connect("tcp://127.0.0.1:5557")
 
 server_name = " "
 
@@ -48,7 +48,7 @@ class DataIot():
 def publish_IoT_Data():
         rabbitmq = RabbitMQ()
         try:
-            rabbitmq.publish(queue_name='servers', message=message)
+            rabbitmq.publish(queue_name='server_03', message=message)
             print("Test message published successfully.")
         except Exception as e:
             print(f"Failed to publish test message: {e}")
@@ -60,4 +60,4 @@ if server_ulid != " ":
         data = DataIot(server_ulid,date, round(random.uniform(20,40),1),round(random.uniform(0,100),1),round(random.uniform(110,220),1),round(random.uniform(1,10),1))
         message = jsonpickle.dumps(data.to_dict())
         publish_IoT_Data()
-        time.sleep(10)
+        time.sleep(5)

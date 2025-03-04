@@ -7,16 +7,10 @@ from pydantic import BaseModel
 import Security.auth as auth
 import random
 import string
-import zmq
-import msgpack
 
 app = FastAPI()
 app.include_router(auth.router)
 models.Base.metadata.create_all(bind = engine)
-
-context = zmq.Context()
-socket = context.socket(zmq.PUSH)
-socket.bind("tcp://127.0.0.1:5555")
 
 class Data(BaseModel):
     server_ulid: str
@@ -53,10 +47,14 @@ user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 async def postData(data: Data, db: db_dependency):
     db_data = models.IotData(server_ulid = data.server_ulid, timestamp = data.timestamp, temperature = data.temperature, 
                              humidity = data.humidity, voltage = data.voltage, current = data.current)
-    db.add(db_data)
-    db.commit()
-    db.refresh(db_data)
-    return db_data
+    db_server = db.query(models.Servershealth).filter(data.server_ulid == models.Servershealth.server_ulid).first()
+    if db_server:
+        db.add(db_data)
+        db.commit()
+        db.refresh(db_data)
+        return db_data
+    else:
+        raise HTTPException(status_code=500)
 
 @app.get("/data")
 async def Datas(user: user_dependency, db: db_dependency):
@@ -65,7 +63,14 @@ async def Datas(user: user_dependency, db: db_dependency):
     db_datas = db.query(models.IotData).offset(0).limit(100).all()
     return db_datas
 
-@app.get("/health")
+@app.get("/data/{server_ulid}")
+async def DatasServer(server_id: str, user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+    db_datas = db.query(models.IotData).filter(server_id == models.IotData.server_ulid).order_by(models.IotData.id.desc()).first()
+    return db_datas
+
+@app.get("/health/all")
 async def Servers(user: user_dependency, db: db_dependency):
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication Failed')
@@ -88,12 +93,27 @@ async def postServers(server: ServerActivation, user: user_dependency, db: db_de
     db.add(db_server)
     db.commit()
     db.refresh(db_server)
-    activation = {"server_ulid": ulid, "server_name": server.server_name}
-    serialize_object = msgpack.packb(activation)
-    socket.send(serialize_object)
-    socket.close()
-    context.term()
     return db_server
+
+@app.put("/updateServerStatus/{server_ulid}/{status}", include_in_schema=False)
+def UpdateServerHealthStatus(server_ulid: str, status: str, db: db_dependency):
+    db_server = db.query(models.Servershealth).filter(server_ulid == models.Servershealth.server_ulid).first()
+
+    if db_server is None:
+        raise HTTPException(status_code=404, detail="Server not found")
+    db_server.status = status
+    db.commit()
+    db.refresh(db_server)
+
+@app.get("/health", include_in_schema=False)
+async def Servers(db: db_dependency):
+    db_servers = db.query(models.Servershealth).offset(0).limit(100).all()
+    return db_servers
+
+@app.get("/dataIntern/{server_ulid}", include_in_schema=False)
+def DatasIntern(server_ulid: str, db: db_dependency):
+    db_datas = db.query(models.IotData).filter(server_ulid == models.IotData.server_ulid).order_by(models.IotData.id.desc()).first()
+    return db_datas
 
 if __name__ == '__main__':
     import uvicorn

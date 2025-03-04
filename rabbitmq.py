@@ -11,6 +11,11 @@ class RabbitMQ:
         self.channel = None
         self.connect()
 
+    def get_all_queues(self):
+        url = "http://localhost:15672/api/queues"
+        auth = (self.user, self.password)
+        headers = {"Content-Type": "application/json"}
+
     def connect(self):
         credentials = pika.PlainCredentials(self.user, self.password)
         parameters = pika.ConnectionParameters(host=self.host, port=self.port, credentials=credentials)
